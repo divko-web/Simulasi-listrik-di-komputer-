@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulasi Aliran Listrik Komputer - I Ketut Putra Utara Surya Jaya</title>
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --accent: #38bdf8;
+            --power-on: #22c55e;
+            --power-off: #ef4444;
+            --text-color: #f8fafc;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            border-bottom: 2px solid var(--accent);
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+
+        .header h1 { margin: 5px 0; color: var(--accent); }
+        .header h3 { margin: 5px 0; font-weight: normal; color: #94a3b8; }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 20px;
+        }
+
+        /* Panel Kontrol & Diagram */
+        .main-panel {
+            background-color: var(--card-bg);
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+        }
+
+        .side-panel {
+            background-color: var(--card-bg);
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+        }
+
+        /* Status Watt & Indicator */
+        .watt-meter {
+            background: #0284c7;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            font-size: 1.2rem;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        button {
+            padding: 10px 15px;
+            border: none;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.2s;
+            color: white;
+        }
+
+        .btn-power { background-color: var(--power-on); }
+        .btn-off { background-color: var(--power-off); }
+        .btn-action { background-color: #8b5cf6; }
+        .btn-warning { background-color: #f59e0b; }
+
+        button:hover { opacity: 0.8; transform: scale(1.02); }
+
+        /* Diagram Alir Komponen */
+        .diagram {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            position: relative;
+        }
+
+        .node {
+            background: #334155;
+            padding: 12px;
+            border-radius: 8px;
+            border: 2px solid #475569;
+            transition: 0.3s;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .node.active {
+            border-color: var(--accent);
+            box-shadow: 0 0 12px var(--accent);
+            background: #1e293b;
+        }
+
+        .node.error {
+            border-color: var(--power-off);
+            box-shadow: 0 0 12px var(--power-off);
+            background: #450a0a;
+        }
+
+        .output-box {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .screen, .speaker {
+            flex: 1;
+            height: 120px;
+            background: #000;
+            border: 2px solid #475569;
+            border-radius: 8px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            text-align: center;
+        }
+
+        .screen-content {
+            display: none;
+            color: #4ade80;
+            font-size: 2rem;
+        }
+
+        .speaker-wave {
+            display: none;
+            color: #f43f5e;
+            font-size: 1.5rem;
+            animation: pulse 0.8s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+
+        /* Penjelasan / Cara Kerja */
+        .info-section {
+            margin-top: 30px;
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: 12px;
+            line-height: 1.6;
+        }
+
+        .info-section h2 { color: var(--accent); }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1>Simulasi Kerja Listrik Komputer</h1>
+        <h3>Disusun oleh: <strong>I Ketut Putra Utara Surya Jaya</strong> | Kelas: <strong>X TITL 1</strong></h3>
+    </div>
+
+    <div class="container">
+        <!-- Panel Utama Simulasi -->
+        <div class="main-panel">
+            <div class="watt-meter">
+                Penggunaan Listrik Saat Ini: <span id="watt-display">0</span> Watt
+            </div>
+
+            <!-- Tombol Kontrol -->
+            <div class="controls">
+                <button class="btn-power" onclick="turnOn()">1. Nyalakan Listrik</button>
+                <button class="btn-action" onclick="runProcess()">2. Tampilkan Gambar & Suara</button>
+                <button class="btn-warning" onclick="simulasiSalahKabel()">Simulasi Salah Kabel</button>
+                <button class="btn-warning" onclick="simulasiOverload()">Simulasi Overload</button>
+                <button class="btn-off" onclick="matiListrik()">Simulasi Mati Listrik / Reset</button>
+            </div>
+
+            <!-- Diagram Alur Listrik -->
+            <div class="diagram">
+                <div class="node" id="node-pln">
+                    <span>⚡ <strong>Sumber Listrik PLN (AC 220V)</strong></span>
+                    <span id="status-pln">Mati</span>
+                </div>
+                <div class="node" id="node-psu">
+                    <span>🔌 <strong>Power Supply / PSU (Ubah ke DC 12V, 5V, 3.3V)</strong></span>
+                    <span id="status-psu">Mati</span>
+                </div>
+                <div class="node" id="node-mobo">
+                    <span>🔲 <strong>Motherboard & CPU (Pengatur Data & Arus)</strong></span>
+                    <span id="status-mobo">Mati</span>
+                </div>
+                
+                <div class="output-box">
+                    <div class="screen" id="screen-box">
+                        <span id="screen-status" style="color: #64748b;">Monitor (Off)</span>
+                        <div class="screen-content" id="screen-img">🖥️ 🖼️<br><small style="font-size: 0.8rem; color:white;">Gambar Muncul!</small></div>
+                    </div>
+                    <div class="speaker" id="speaker-box">
+                        <span id="speaker-status" style="color: #64748b;">Speaker (Off)</span>
+                        <div class="speaker-wave" id="speaker-sound">🔊 🎶<br><small style="font-size: 0.8rem; color:white;">Suara Berbunyi!</small></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Panel Status Pesan -->
+        <div class="side-panel">
+            <h3>Status & Catatan Sistem</h3>
+            <p id="log-message" style="color: #94a3b8; font-style: italic;">
+                Klik "Nyalakan Listrik" untuk memulai simulasi.
+            </p>
+        </div>
+    </div>
+
+    <!-- Penjelasan Cara Kerja Listrik di Komputer -->
+    <div class="info-section">
+        <h2>💡 Bagaimana Cara Kerja Listrik di Komputer? (Simpel)</h2>
+        <ol>
+            <li><strong>Sumber PLN (AC):</strong> Arus listrik dari stopkontak rumah berarus bolak-balik (AC) bertegangan tinggi (220V).</li>
+            <li><strong>Power Supply / PSU (AC ke DC):</strong> Komputer tidak bisa pakai arus AC langsung. PSU berfungsi **mengubah arus AC 220V menjadi arus DC** (Searah) bertegangan rendah (12V untuk processor & VGA, 5V & 3.3V untuk komponen pendukung).</li>
+            <li><strong>Motherboard & CPU:</strong> Arus DC dari PSU disebarkan melalui jalur-jalur kecil di motherboard untuk memberi daya pada CPU, RAM, dan komponen lainnya.</li>
+            <li><strong>Monitor & Speaker:</strong> CPU dan Kartu Grafis (GPU) memproses data lalu mengirimkan sinyal elektronik yang diubah menjadi **cahaya/gambar** di Monitor dan **gelombang suara** di Speaker.</li>
+        </ol>
+        <hr style="border-color: #334155;">
+        <h3>⚠️ Apa yang terjadi saat gangguan?</h3>
+        <ul>
+            <li><strong>Salah Pemasangan Kabel:</strong> Terjadi arus pendek (korsleting). Komponen bisa terbakar karena arus masuk ke jalur yang tidak sesuai tegangannya. PSU berkualitas akan mengaktifkan proteksi (OCP/OVP) dan langsung mati otomatis.</li>
+            <li><strong>Overload Listrik:</strong> Terjadi ketika komputer meminta daya (Watt) melebihi kemampuan maksimal PSU. Komputer akan langsung *shutdown* atau mereset sendiri untuk mencegah kebakaran.</li>
+            <li><strong>Mati Listrik Tiba-Tiba:</strong> Arus diputus secara mendadak, menyebabkan daya Watt langsung drop ke 0. Komponen tidak sempat menyimpan data dan berisiko merusak harddisk/SSD.</li>
+        </ul>
+    </div>
+
+    <script>
+        let isPowerOn = false;
+        const wattDisplay = document.getElementById('watt-display');
+        const logMsg = document.getElementById('log-message');
+
+        function updateWatt(val) {
+            wattDisplay.innerText = val;
+        }
+
+        function setLog(text, color = "#f8fafc") {
+            logMsg.innerText = text;
+            logMsg.style.color = color;
+        }
+
+        function resetNodes() {
+            document.querySelectorAll('.node').forEach(n => n.className = 'node');
+            document.getElementById('screen-box').style.borderColor = '#475569';
+            document.getElementById('speaker-box').style.borderColor = '#475569';
+            document.getElementById('screen-img').style.display = 'none';
+            document.getElementById('speaker-sound').style.display = 'none';
+            document.getElementById('screen-status').style.display = 'block';
+            document.getElementById('speaker-status').style.display = 'block';
+            document.getElementById('screen-status').innerText = 'Monitor (Off)';
+            document.getElementById('speaker-status').innerText = 'Speaker (Off)';
+            
+            document.getElementById('status-pln').innerText = 'Mati';
+            document.getElementById('status-psu').innerText = 'Mati';
+            document.getElementById('status-mobo').innerText = 'Mati';
+        }
+
+        function turnOn() {
+            resetNodes();
+            isPowerOn = true;
+            
+            document.getElementById('node-pln').classList.add('active');
+            document.getElementById('node-psu').classList.add('active');
+            document.getElementById('node-mobo').classList.add('active');
+            
+            document.getElementById('status-pln').innerText = 'Aktif (220V AC)';
+            document.getElementById('status-psu').innerText = 'Aktif (Konversi ke DC)';
+            document.getElementById('status-mobo').innerText = 'Standby';
+
+            document.getElementById('screen-status').innerText = 'Monitor (Standby)';
+            document.getElementById('speaker-status').innerText = 'Speaker (Standby)';
+
+            updateWatt(65); // Watt saat standby
+            setLog("Listrik menyala normal! PSU berhasil mengonversi arus AC PLN menjadi DC. Sistem siap melakukan proses.", "#4ade80");
+        }
+
+        function runProcess() {
+            if (!isPowerOn) {
+                setLog("Nyalakan listrik terlebih dahulu!", "#ef4444");
+                return;
+            }
+
+            document.getElementById('screen-status').style.display = 'none';
+            document.getElementById('speaker-status').style.display = 'none';
+
+            document.getElementById('screen-img').style.display = 'block';
+            document.getElementById('speaker-sound').style.display = 'block';
+
+            document.getElementById('screen-box').style.borderColor = '#38bdf8';
+            document.getElementById('speaker-box').style.borderColor = '#f43f5e';
+
+            updateWatt(250); // Watt naik saat bekerja berat
+            setLog("Proses berjalan! Kartu grafis mengirim sinyal gambar ke Monitor, dan kartu suara mengalirkan frekuensi listrik ke Speaker. Daya naik menjadi 250W.", "#38bdf8");
+        }
+
+        function simulasiSalahKabel() {
+            resetNodes();
+            isPowerOn = false;
+            updateWatt(0);
+
+            document.getElementById('node-psu').classList.add('error');
+            document.getElementById('node-mobo').classList.add('error');
+
+            setLog("❌ KORSLETING! Kabel terpasang di jalur tegangan yang salah. Sistem proteksi PSU memutus aliran listrik secara paksa untuk mencegah komponen ter bakar!", "#ef4444");
+        }
+
+        function simulasiOverload() {
+            if (!isPowerOn) {
+                setLog("Nyalakan listrik dulu untuk mencoba simulasi overload.", "#ef4444");
+                return;
+            }
+
+            updateWatt(600); // Melebihi kapasitas (misal kapasitas PSU 400W)
+            
+            setTimeout(() => {
+                resetNodes();
+                isPowerOn = false;
+                updateWatt(0);
+                setLog("⚠️ OVERLOAD (Beban Berlebih)! Beban listrik komputer mencapai 600W (Melebihi kapasitas maksimal PSU). Sistem mati otomatis (Proteksi Over Power Protection/OPP aktif)!", "#f59e0b");
+            }, 800);
+        }
+
+        function matiListrik() {
+            resetNodes();
+            isPowerOn = false;
+            updateWatt(0);
+            setLog("🔌 MATI LISTRIK! Arus dari PLN terputus secara mendadak. Daya Watt langsung drop ke 0. Komputer mati seketika.", "#ef4444");
+        }
+    </script>
+</body>
+</html>
